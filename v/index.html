@@ -30,6 +30,13 @@
   .num { direction:ltr; unicode-bidi:isolate; }
   .paid { color:var(--g2); }
   .note { color:var(--mut); font-size:14px; margin:12px 0 0; }
+  .contact { margin-top:16px; }
+  .contact p { margin:0 0 8px; font-size:15px; }
+  .btn { display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; font-weight:700; border-radius:12px; padding:11px 12px; margin:8px 0; font-size:16px; }
+  .wa { background:#1D9E75; color:#fff; }
+  .wach { background:#E7F5EF; color:#0F6E56; border:1.5px solid #1D9E75; }
+  .fb { background:#1877F2; color:#fff; }
+  .only { text-align:center; color:var(--mut); font-size:14px; margin:4px 0 6px; }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -66,12 +73,20 @@
 
     <div id="fake" hidden>
       <div class="box bad">✖ الفاتورة دي مش من الشحنوتي</div>
-      <p class="note">الكود ده مش موجود عندنا، أو حد غيّر فيه. ما تعتمدش على الفاتورة دي، وتواصل معانا على الأرقام الرسمية.</p>
+      <p class="note">الكود ده مش موجود عندنا، أو حد غيّر فيه. ما تعتمدش على الفاتورة دي.</p>
     </div>
 
     <div id="err" hidden>
       <div class="box wait">مش قادرين نتحقق دلوقتي</div>
       <p class="note">اتأكد إن النت شغال وجرّب تاني بعد شوية.</p>
+    </div>
+    <div id="contact" class="contact" hidden>
+      <p id="ctTitle">للتواصل معانا على أرقامنا الرسمية بس:</p>
+      <a class="btn wa" href="https://wa.me/201050711374" target="_blank" rel="noopener">واتساب <span class="num">+201050711374</span></a>
+      <a class="btn wa" href="https://wa.me/201061851277" target="_blank" rel="noopener">واتساب <span class="num">+201061851277</span></a>
+      <div class="only">وليس لدينا أرقام أخرى</div>
+      <a class="btn wach" href="https://whatsapp.com/channel/0029Vb6Nx1Y3LdQZjf75ff23" target="_blank" rel="noopener">قناة الواتساب</a>
+      <a class="btn fb" href="https://www.facebook.com/shahnuty" target="_blank" rel="noopener">صفحة الفيسبوك</a>
     </div>
   </div>
 </div>
@@ -84,7 +99,7 @@
   function fmt(c) { return c.length > 4 ? c.slice(0, 4) + '-' + c.slice(4) : c; }
   function hex(a) { return Array.from(a).map(function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
   function unb64(s) { var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
-  function show(id) { ['wait', 'good', 'fake', 'err'].forEach(function (x) { $(x).hidden = x !== id; }); $('hint').hidden = !!id; }
+  function show(id) { ['wait', 'good', 'fake', 'err'].forEach(function (x) { $(x).hidden = x !== id; }); $('hint').hidden = !!id; $('contact').hidden = !id || id === 'wait'; $('ctTitle').textContent = id === 'fake' ? 'تواصل معانا على أرقامنا الرسمية بس:' : 'للتواصل معانا:'; }
   function two(n) { return String(n).padStart(2, '0'); }
   function when(ts) {
     try {
