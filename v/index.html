@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>تحقق من الفاتورة · الشحنوتي</title>
+<style>
+  :root { --ink:#1f2328; --mut:#6b7280; --line:#e5e7eb; --g:#0F6E56; --g2:#1D9E75; --gbg:#E7F5EF; --r:#B42318; --rbg:#FEF3F2; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f3f4f6; color:var(--ink); font:16px/1.5 "Noto Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif; }
+  .wrap { max-width:460px; margin:0 auto; padding:24px 16px 40px; }
+  .card { background:#fff; border-radius:18px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:22px 20px; }
+  .brand { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:18px; }
+  .brand b { font-size:28px; }
+  .brand small { display:block; letter-spacing:4px; color:var(--mut); font-weight:700; font-size:12px; text-align:center; direction:ltr; }
+  form { display:flex; gap:8px; margin-bottom:6px; }
+  input { flex:1; min-width:0; font:600 20px ui-monospace,Menlo,Consolas,monospace; letter-spacing:2px; text-align:center; direction:ltr; padding:12px; border:1.5px solid var(--line); border-radius:12px; text-transform:uppercase; }
+  input:focus { outline:none; border-color:var(--g2); }
+  button { font:600 16px inherit; font-family:inherit; padding:0 18px; border:0; border-radius:12px; background:var(--g2); color:#fff; cursor:pointer; }
+  .hint { color:var(--mut); font-size:14px; text-align:center; margin:4px 0 0; }
+  .box { border:2px solid; border-radius:14px; padding:12px 14px; font-weight:700; font-size:19px; text-align:center; margin:18px 0 10px; }
+  .ok { border-color:var(--g2); background:var(--gbg); color:var(--g); }
+  .bad { border-color:var(--r); background:var(--rbg); color:var(--r); }
+  .wait { border-color:var(--line); color:var(--mut); font-weight:500; font-size:16px; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:10px 2px; border-bottom:1px solid var(--line); }
+  td:first-child { color:var(--mut); }
+  td:last-child { text-align:left; font-weight:700; }
+  .num { direction:ltr; unicode-bidi:isolate; }
+  .paid { color:var(--g2); }
+  .note { color:var(--mut); font-size:14px; margin:12px 0 0; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="brand">
+      <svg width="52" height="52" viewBox="0 0 44 44" aria-hidden="true">
+        <circle cx="22" cy="22" r="20" fill="#EF9F27"/><circle cx="22" cy="22" r="15.6" fill="none" stroke="#FAC775" stroke-width="1.8"/>
+        <g fill="#412402"><ellipse cx="17.5" cy="29.5" rx="5.2" ry="4" transform="rotate(-25.8 17.5 29.5)"/><rect x="21" y="11" width="2.6" height="19"/><path d="M23.6 11Q25 17 31 19.5Q27.5 15 23.6 15.5Z"/></g>
+      </svg>
+      <div><b>الشحنوتي</b><small>SHAHNUTY</small></div>
+    </div>
+    <form id="f">
+      <input id="code" maxlength="12" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX" aria-label="كود التحقق">
+      <button type="submit">تحقق</button>
+    </form>
+    <p class="hint" id="hint">اكتب الكود المكتوب تحت "تحقق من الفاتورة"</p>
+
+    <div id="wait" class="box wait" hidden>جاري التحقق…</div>
+
+    <div id="good" hidden>
+      <div class="box ok">✔ فاتورة حقيقية من الشحنوتي</div>
+      <table>
+        <tr><td>رقم الفاتورة</td><td class="num" id="r_n"></td></tr>
+        <tr><td>التاريخ</td><td id="r_t"></td></tr>
+        <tr><td>العميل</td><td class="num" id="r_u"></td></tr>
+        <tr><td>العملات</td><td class="num" id="r_c"></td></tr>
+        <tr id="row_a"><td>المبلغ</td><td id="r_a"></td></tr>
+        <tr id="row_p"><td>الحالة</td><td class="paid">مدفوعة</td></tr>
+      </table>
+      <p class="note">قارن الأرقام دي باللي في الفاتورة اللي معاك. لو أي رقم مختلف، يبقى الفاتورة اتعدّلت.</p>
+    </div>
+
+    <div id="fake" hidden>
+      <div class="box bad">✖ الفاتورة دي مش من الشحنوتي</div>
+      <p class="note">الكود ده مش موجود عندنا، أو حد غيّر فيه. ما تعتمدش على الفاتورة دي، وتواصل معانا على الأرقام الرسمية.</p>
+    </div>
+
+    <div id="err" hidden>
+      <div class="box wait">مش قادرين نتحقق دلوقتي</div>
+      <p class="note">اتأكد إن النت شغال وجرّب تاني بعد شوية.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var GIST = '1f1ec0ddd6844e5d7f4f3071d247093e', OWNER = 'shahnuty';
+  var $ = function (id) { return document.getElementById(id); };
+  function norm(s) { return String(s || '').toUpperCase().replace(/[\s-]+/g, '').replace(/O/g, '0').replace(/[IL]/g, '1').replace(/U/g, 'V'); }
+  function fmt(c) { return c.length > 4 ? c.slice(0, 4) + '-' + c.slice(4) : c; }
+  function hex(a) { return Array.from(a).map(function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+  function unb64(s) { var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  function show(id) { ['wait', 'good', 'fake', 'err'].forEach(function (x) { $(x).hidden = x !== id; }); $('hint').hidden = !!id; }
+  function two(n) { return String(n).padStart(2, '0'); }
+  function when(ts) {
+    try {
+      var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }).formatToParts(new Date(ts)).forEach(function (x) { p[x.type] = x.value; });
+      return '⁦' + p.day + '/' + p.month + '/' + p.year + '⁩ · ⁦' + p.hour + ':' + p.minute + '⁩ ' + (String(p.dayPeriod).toLowerCase() === 'pm' ? 'م' : 'ص');
+    } catch (e) { var d = new Date(ts); return two(d.getDate()) + '/' + two(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  }
+  function money(x) { return Math.trunc((+x || 0) + 1e-9).toLocaleString('en-US'); }
+  async function keys(code) {
+    var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveBits']);
+    var bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode('shahnuty-verify-1'), iterations: 20000, hash: 'SHA-256' }, base, 384));
+    return { k: hex(bits.slice(0, 10)), key: await crypto.subtle.importKey('raw', bits.slice(16, 48), 'AES-GCM', false, ['decrypt']) };
+  }
+  async function shard(ch) {
+    var name = 'v' + ch + '.json', txt = null;
+    try {
+      var r = await fetch('https://api.github.com/gists/' + GIST, { cache: 'no-store', headers: { Accept: 'application/vnd.github+json' } });
+      if (r.ok) {
+        var g = await r.json(), f = g.files && g.files[name];
+        if (!f) return [];
+        txt = f.truncated ? await (await fetch(f.raw_url, { cache: 'no-store' })).text() : f.content;
+      }
+    } catch (e) {}
+    if (txt == null) {
+      var r2 = await fetch('https://gist.githubusercontent.com/' + OWNER + '/' + GIST + '/raw/' + name + '?t=' + Date.now(), { cache: 'no-store' });
+      if (r2.status === 404) return [];
+      if (!r2.ok) throw new Error('HTTP ' + r2.status);
+      txt = await r2.text();
+    }
+    var o = JSON.parse(txt || '{}');
+    return Array.isArray(o.r) ? o.r : [];
+  }
+  async function check(raw) {
+    var code = norm(raw);
+    $('code').value = fmt(code);
+    if (!/^[0-9A-HJKMNP-TV-Z]{8}$/.test(code)) { show('fake'); return; }
+    show('wait');
+    try {
+      var ks = await keys(code);
+      var list = await shard(ks.k[0]);
+      var e = list.filter(function (x) { return x && x.k === ks.k; })[0];
+      if (!e) { show('fake'); return; }
+      var rec = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(e.iv) }, ks.key, unb64(e.e))));
+      $('r_n').textContent = rec.n || '';
+      $('r_t').textContent = when(rec.t);
+      $('r_u').textContent = rec.u || '';
+      $('r_c').textContent = money(rec.c);
+      $('row_a').hidden = rec.a == null;
+      if (rec.a != null) $('r_a').textContent = money(rec.a) + ' ' + (rec.cur || 'ج.م');
+      $('row_p').hidden = !rec.p;
+      show('good');
+    } catch (err) { show('err'); }
+  }
+  $('f').addEventListener('submit', function (ev) { ev.preventDefault(); check($('code').value); });
+  var h = decodeURIComponent(location.hash.replace(/^#/, ''));
+  if (h) check(h);
+})();
+</script>
+</body>
+</html>
